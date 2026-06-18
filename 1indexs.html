@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1420">
+<title>KM Takip — Yönetim Paneli</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #141c2e;
+    --card2: #192035;
+    --accent: #3d7fff;
+    --accent2: #00c896;
+    --accent3: #f59e0b;
+    --danger: #ff4d6d;
+    --text: #e8eaf0;
+    --muted: #6b7a9d;
+    --border: #1e2a45;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { font-size: 12px; color: var(--muted); }
+
+  .header-right {
+    display: flex; align-items: center; gap: 16px;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,200,150,0.12);
+    border: 1px solid rgba(0,200,150,0.25);
+    padding: 5px 12px;
+    border-radius: 50px;
+    font-size: 12px;
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+  .refresh-btn {
+    background: var(--border);
+    border: none;
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { color: var(--text); background: var(--card2); }
+
+  .last-update {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding: 0 8px;
+  }
+
+  .driver-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 4px;
+  }
+
+  .driver-item:hover, .driver-item.active {
+    background: var(--card2);
+  }
+
+  .driver-item.active .d-name { color: var(--accent); }
+
+  .d-avatar {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .d-name { font-size: 13px; font-weight: 600; }
+  .d-stats { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .d-km-badge {
+    margin-left: auto;
+    background: rgba(0,200,150,0.1);
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  /* MAIN */
+  .main { padding: 28px 32px; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-value.blue { color: var(--accent); }
+  .stat-value.green { color: var(--accent2); }
+  .stat-value.gold { color: var(--accent3); }
+  .stat-value.white { color: var(--text); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-right: auto;
+  }
+
+  .filter-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    width: 180px;
+  }
+
+  .filter-input:focus { border-color: var(--accent); }
+
+  .sort-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px 14px;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .sort-btn:hover { color: var(--text); }
+
+  /* Table */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--card2); }
+
+  td {
+    padding: 14px 16px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .td-driver {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .td-avatar {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .td-name { font-weight: 600; font-size: 13px; }
+
+  .vehicle-tag {
+    background: rgba(61,127,255,0.12);
+    color: var(--accent);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'SF Mono', monospace;
+  }
+
+  .km-num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .km-diff-chip {
+    background: rgba(0,200,150,0.12);
+    color: var(--accent2);
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: inline-block;
+  }
+
+  .time-cell { color: var(--muted); font-size: 12px; }
+
+  .note-cell {
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Empty */
+  .empty-table {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+  }
+
+  .empty-table .big { font-size: 40px; margin-bottom: 10px; }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* Chart area */
+  .chart-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 100px;
+    padding-top: 8px;
+  }
+
+  .bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .bar {
+    width: 100%;
+    background: linear-gradient(to top, var(--accent), rgba(61,127,255,0.4));
+    border-radius: 5px 5px 0 0;
+    min-height: 3px;
+    transition: height 0.4s ease;
+  }
+
+  .bar-label {
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .bar-val {
+    font-size: 10px;
+    color: var(--accent2);
+    font-weight: 700;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .main { padding: 16px; }
+    .header { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🚗</div>
+    <div>
+      <h1>KM Takip</h1>
+      <span>Yönetim Paneli</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div> Canlı</div>
+    <span class="last-update" id="lastUpdate">—</span>
+    <button class="refresh-btn" onclick="loadAll()">↻ Yenile</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-title">Sürücüler</div>
+    <div id="driverList">
+      <div style="color:var(--muted);font-size:13px;padding:8px">Yükleniyor...</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Toplam Sefer</div>
+        <div class="stat-value white" id="statTotal">—</div>
+        <div class="stat-sub">kayıt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Toplam KM</div>
+        <div class="stat-value green" id="statKm">—</div>
+        <div class="stat-sub">kilometre</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aktif Araç</div>
+        <div class="stat-value blue" id="statVehicles">—</div>
+        <div class="stat-sub">plaka</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sürücü Sayısı</div>
+        <div class="stat-value gold" id="statDrivers">—</div>
+        <div class="stat-sub">kişi</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-area">
+      <div class="chart-title">Sürücü Başına Toplam KM</div>
+      <div class="chart-bars" id="chartBars">
+        <div style="color:var(--muted);font-size:13px">—</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="filter-bar">
+      <h2>Tüm Seferler</h2>
+      <input class="filter-input" type="text" id="searchInput" placeholder="🔍 Ara..." oninput="filterTable()">
+      <select class="sort-btn" id="sortSelect" onchange="filterTable()">
+        <option value="newest">En Yeni</option>
+        <option value="oldest">En Eski</option>
+        <option value="highest">En Yüksek KM</option>
+        <option value="lowest">En Düşük KM</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <div class="loading" id="loadingMsg">⏳ Yükleniyor...</div>
+      <table id="tripsTable" style="display:none">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Sürücü</th>
+            <th>Araç</th>
+            <th>Başlangıç KM</th>
+            <th>Bitiş KM</th>
+            <th>Fark</th>
+            <th>Başlangıç Saat</th>
+            <th>Bitiş Saat</th>
+            <th>Not</th>
+          </tr>
+        </thead>
+        <tbody id="tripsBody"></tbody>
+      </table>
+      <div id="emptyMsg" style="display:none" class="empty-table">
+        <div class="big">📭</div>
+        Henüz kayıt bulunmuyor
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHARED_KEY = 'km_trips_shared';
+let allTrips = [];
+let activeDriver = null;
+const colors = ['#3d7fff','#00c896','#f59e0b','#ff4d6d','#a78bfa','#f97316','#06b6d4','#ec4899'];
+
+async function loadAll() {
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('tripsTable').style.display = 'none';
+  document.getElementById('emptyMsg').style.display = 'none';
+
+  try {
+    const r = await window.storage.get(SHARED_KEY, true);
+    allTrips = r ? JSON.parse(r.value) : [];
+  } catch {
+    allTrips = [];
+  }
+
+  updateStats();
+  updateDriverList();
+  updateChart();
+  filterTable();
+
+  document.getElementById('lastUpdate').textContent =
+    'Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR');
+}
+
+function updateStats() {
+  const totalKm = allTrips.reduce((s,t) => s + (t.kmDiff||0), 0);
+  const vehicles = new Set(allTrips.map(t => t.vehicle)).size;
+  const drivers = new Set(allTrips.map(t => t.driverKey)).size;
+
+  document.getElementById('statTotal').textContent = allTrips.length;
+  document.getElementById('statKm').textContent = totalKm.toLocaleString('tr-TR');
+  document.getElementById('statVehicles').textContent = vehicles;
+  document.getElementById('statDrivers').textContent = drivers;
+}
+
+function updateDriverList() {
+  const driversMap = {};
+  allTrips.forEach(t => {
+    if (!driversMap[t.driverKey]) {
+      driversMap[t.driverKey] = { name: t.driverName, key: t.driverKey, trips: 0, km: 0 };
+    }
+    driversMap[t.driverKey].trips++;
+    driversMap[t.driverKey].km += (t.kmDiff||0);
+  });
+
+  const drivers = Object.values(driversMap).sort((a,b) => b.km - a.km);
+  const list = document.getElementById('driverList');
+
+  if (!drivers.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px">Sürücü yok</div>';
+    return;
+  }
+
+  const allItem = `
+    <div class="driver-item ${!activeDriver ? 'active' : ''}" onclick="filterByDriver(null)">
+      <div class="d-avatar" style="background:rgba(61,127,255,0.15)">👥</div>
+      <div>
+        <div class="d-name">Tümü</div>
+        <div class="d-stats">${allTrips.length} sefer</div>
+      </div>
+    </div>
+  `;
+
+  const items = drivers.map((d,i) => {
+    const color = colors[i % colors.length];
+    const initials = d.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `
+      <div class="driver-item ${activeDriver === d.key ? 'active' : ''}" onclick="filterByDriver('${d.key}')">
+        <div class="d-avatar" style="background:${color}22;color:${color}">${initials}</div>
+        <div>
+          <div class="d-name">${d.name}</div>
+          <div class="d-stats">${d.trips} sefer</div>
+        </div>
+        <div class="d-km-badge">${d.km.toLocaleString('tr-TR')} km</div>
+      </div>
+    `;
+  }).join('');
+
+  list.innerHTML = allItem + items;
+}
+
+function updateChart() {
+  const driversMap = {};
+  allTrips.forEach(t => {
+    if (!driversMap[t.driverKey]) driversMap[t.driverKey] = { name: t.driverName, km: 0 };
+    driversMap[t.driverKey].km += (t.kmDiff||0);
+  });
+  const drivers = Object.values(driversMap).sort((a,b) => b.km - a.km).slice(0,10);
+  const maxKm = Math.max(...drivers.map(d => d.km), 1);
+
+  const bars = document.getElementById('chartBars');
+  if (!drivers.length) { bars.innerHTML = '<div style="color:var(--muted);font-size:13px">Veri yok</div>'; return; }
+
+  bars.innerHTML = drivers.map((d,i) => {
+    const color = colors[i % colors.length];
+    const h = Math.max(4, Math.round((d.km / maxKm) * 90));
+    return `
+      <div class="bar-wrap">
+        <div class="bar-val">${d.km.toLocaleString('tr-TR')}</div>
+        <div class="bar" style="height:${h}px;background:linear-gradient(to top, ${color}, ${color}55)"></div>
+        <div class="bar-label">${d.name.split(' ')[0]}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterByDriver(key) {
+  activeDriver = key;
+  updateDriverList();
+  filterTable();
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+
+  let trips = [...allTrips];
+  if (activeDriver) trips = trips.filter(t => t.driverKey === activeDriver);
+  if (q) trips = trips.filter(t =>
+    t.driverName?.toLowerCase().includes(q) ||
+    t.vehicle?.toLowerCase().includes(q) ||
+    t.note?.toLowerCase().includes(q)
+  );
+
+  if (sort === 'newest') trips.sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
+  if (sort === 'oldest') trips.sort((a,b) => new Date(a.savedAt) - new Date(b.savedAt));
+  if (sort === 'highest') trips.sort((a,b) => b.kmDiff - a.kmDiff);
+  if (sort === 'lowest') trips.sort((a,b) => a.kmDiff - b.kmDiff);
+
+  const body = document.getElementById('tripsBody');
+  document.getElementById('loadingMsg').style.display = 'none';
+
+  if (!trips.length) {
+    document.getElementById('tripsTable').style.display = 'none';
+    document.getElementById('emptyMsg').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('emptyMsg').style.display = 'none';
+  document.getElementById('tripsTable').style.display = 'table';
+
+  body.innerHTML = trips.map((t, i) => {
+    const driverIdx = [...new Set(allTrips.map(x=>x.driverKey))].indexOf(t.driverKey);
+    const color = colors[driverIdx % colors.length];
+    const initials = (t.driverName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `
+      <tr>
+        <td style="color:var(--muted);font-size:12px">${i+1}</td>
+        <td>
+          <div class="td-driver">
+            <div class="td-avatar" style="background:${color}22;color:${color}">${initials}</div>
+            <div class="td-name">${t.driverName || '—'}</div>
+          </div>
+        </td>
+        <td><span class="vehicle-tag">${t.vehicle || '—'}</span></td>
+        <td class="km-num">${(t.kmStart||0).toLocaleString('tr-TR')}</td>
+        <td class="km-num">${(t.kmEnd||0).toLocaleString('tr-TR')}</td>
+        <td><span class="km-diff-chip">+${(t.kmDiff||0).toLocaleString('tr-TR')} km</span></td>
+        <td class="time-cell">${formatDT(t.timeStart)}</td>
+        <td class="time-cell">${t.timeEnd ? formatDT(t.timeEnd) : '<span style="color:var(--border)">—</span>'}</td>
+        <td class="note-cell">${t.note || ''}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function formatDT(str) {
+  if (!str) return '—';
+  const d = new Date(str);
+  return d.toLocaleDateString('tr-TR', {day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
+}
+
+// Auto refresh every 30s
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>
